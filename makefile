@@ -1,7 +1,7 @@
 CC = gcc
 
 server:
-	$(CC) server.c -o server -lm
+	$(CC) -pthread -g -o server -lm server.c
 
 clean:
 	rm -f server
