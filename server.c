@@ -258,7 +258,6 @@ void *connection_handler(void *socket_desc)
         if ((fp = fopen(documentPath, "rb"))){
             char * line = NULL;
             size_t len = 0;
-            ssize_t read;
 
             strcat(message, "200 Document Follows\nContent-type: <");
             struct keyValue *typeHash = findKey(&hashTable, contentType);
@@ -269,14 +268,50 @@ void *connection_handler(void *socket_desc)
             char numbytes[32];
             int size = ftell(fp);
             sprintf(numbytes, "%d", size);
+            printf("file length:%d\n", size);
             strcat(message, numbytes);
             rewind(fp);
             strcat(message, ">\n\n");
 
-            char* string = malloc(size+1);
-            memset(string, 0, sizeof(string));
-            fread(string, size, 1, fp);
-            strcat(message, string);
+            //THIS WORKS FOR TEXT AND MAIN.  DON"T FUCK WITH IT
+            /*char* string[MAXMESSAGE];
+            fread(string, 1, sizeof(string), fp);
+            strcat(message, string);*/
+
+            printf("message:%d\n", strlen(message));
+            printf("goal message length:%d\n", size+strlen(message));
+
+            /*char buffer[LINESIZE];
+            memset(buffer, 0, sizeof(buffer));
+            int readBytes;
+            int count = 0;
+            while ((readBytes = fread(&buffer,sizeof(char),sizeof(buffer), fp)) > 0) {
+                //printf("%s\n\n", buffer);
+                count += readBytes;
+                printf("readBytes:%d\n", sizeof(readBytes));
+                strcat(message, buffer);
+                memset(buffer, 0, sizeof(buffer));
+            }
+            printf("%d\n", count);*/
+
+            /*unsigned char* buffer;
+            buffer = malloc(size);
+            memset(*buffer, 0, sizeof(*buffer));
+            fread(buffer, sizeof(unsigned char), size, fp);
+            printf("size of buffer:%s\n", strlen(*buffer));
+            printf("size of buffer:%s\n", sizeof(*buffer));*/
+
+            /*char* buffer = (char *)malloc(size+1);
+            fread(buffer, size, 1, fp);
+            printf("size of buffer:%d\n", sizeof(buffer));
+            //printf("size of buffer:%s\n", strlen(buffer));*/
+
+            send(sock , message , strlen(message), 0);
+            char buffer[LINESIZE];
+            size_t read;
+            while ((read = fread(buffer, 1, sizeof(buffer), fp)) > 0) {
+                send(sock, buffer, (int)read, 0);
+            }
 
             fclose(fp);
 
@@ -285,10 +320,13 @@ void *connection_handler(void *socket_desc)
             strcat(message, "404 Not Found\n\n<html><body>404 Not Found ");
             strcat(message, request.document);
             strcat(message, "</body></html>");
+            send(sock , message , strlen(message), 0);
         }
-        printf("%s\n", message);
 
-        send(sock , message , strlen(message), 0);
+        //printf("%s\n", message);
+        //printf("%d\n", strlen(message));
+
+
     } else {
         strcat(message, "501 Not Implemented\n\n<html><body>501 Not Implemented ");
         strcat(message, request.command);
