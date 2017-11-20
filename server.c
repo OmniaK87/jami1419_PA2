@@ -13,7 +13,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h> //inet_addr
 #include <unistd.h>    //write
-#include<pthread.h> //for threading , link with lpthread
+#include <pthread.h> //for threading , link with lpthread
 #include <signal.h>
 #include "uthash.h"
 
@@ -55,26 +55,20 @@ int main(int argc, char **argv) {
     }
 
 
-    int client_sock , c , *new_sock;
+    int client_sock , *new_sock;
     struct sockaddr_in server , client;
     char client_message[MAXLINE];
 
     hashTable = NULL;
-
     parse_config_file(&hashTable);
-
     struct keyValue *listenHash = findKey(&hashTable, "Listen");
-    //printf("Port: %s\n", listenHash->value);
 
     //base code from http://www.binarytides.com/server-client-example-c-sockets-linux/
     //Create socket
     socket_desc = socket(AF_INET , SOCK_STREAM , 0);
-    if (socket_desc == -1)
-    {
-        printf("Could not create socket");
-    }
+    if (socket_desc == -1){ printf("Could not create socket");    }
+
     setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
-    //puts("Socket created");
     //Prepare the sockaddr_in structure
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
@@ -86,17 +80,12 @@ int main(int argc, char **argv) {
         perror("bind failed. Error");
         return 1;
     }
-    //puts("bind done");
-    //Listen
     listen(socket_desc , 3);
 
     //Accept and incoming connection
-    //puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
     while( (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
     {
-        //puts("Connection accepted");
-
         pthread_t sniffer_thread;
         new_sock = malloc(1);
         *new_sock = client_sock;
@@ -106,11 +95,6 @@ int main(int argc, char **argv) {
             perror("could not create thread");
             return 1;
         }
-
-        //Now join the thread , so that we dont terminate before the thread
-        //pthread_join( sniffer_thread , NULL);
-        //puts("Handler assigned");
-        //puts("Waiting for incoming connections...");
     }
 
     if (client_sock < 0)
